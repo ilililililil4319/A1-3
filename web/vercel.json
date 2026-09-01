@@ -1,0 +1,17 @@
+{
+  "builds": [
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "css/**", "use": "@vercel/static" },
+    { "src": "js/**", "use": "@vercel/static" },
+    { "src": "images/**", "use": "@vercel/static" },
+    { "src": "api/analyze.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/api/analyze", "dest": "/api/analyze.py" },
+    { "src": "/(.*\\.html)", "dest": "/$1" },
+    { "src": "/css/(.*)", "dest": "/css/$1" },
+    { "src": "/js/(.*)", "dest": "/js/$1" },
+    { "src": "/images/(.*)", "dest": "/images/$1" },
+    { "src": "/", "dest": "/index.html" }
+  ]
+}
