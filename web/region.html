@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     창원댁 - 지역별 시세 페이지 (region.html)
+     창원 5개 구의 평균 매매가를 표로 비교하는 페이지.
+     ※ 지금 표의 숫자는 화면 구성을 보여주기 위한 예시값입니다.
+        실제 데이터 연동은 이후 단계에서 진행합니다.
+     ============================================================ -->
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>지역별 시세 · 창원댁</title>
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    .region { padding: 48px 0 72px; }
+
+    /* 비교 표 */
+    .table-wrap {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden; /* 둥근 모서리 유지 */
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--navy); }
+    thead th {
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 700;
+      text-align: left;
+      padding: 14px 18px;
+    }
+    tbody td {
+      padding: 15px 18px;
+      font-size: 15px;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:nth-child(even) { background: #fafbfc; } /* 짝수 줄 옅은 배경 */
+    .gu-name { font-weight: 700; color: var(--navy); }
+
+    /* 변동률 표시 (상승=빨강 계열, 하락=파랑 계열) */
+    .up   { color: #c0392b; font-weight: 700; }
+    .down { color: #2471a3; font-weight: 700; }
+
+    .note {
+      margin-top: 22px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* 모바일: 표 좌우 스크롤 가능하게 */
+    @media (max-width: 640px) {
+      .table-wrap { overflow-x: auto; }
+      table { min-width: 520px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 네비게이션 (공통) -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo"><span class="dot"></span>창원댁</a>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="index.html">메인</a></li>
+        <li><a href="ai.html">AI 시장분석</a></li>
+        <li><a href="region.html" class="active">지역별 시세</a></li>
+        <li><a href="about.html">소개·문의</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 페이지 상단 제목 -->
+  <section class="page-head">
+    <div class="container">
+      <h1>지역별 시세 비교</h1>
+      <p>창원 5개 구의 최근 6개월 평균 매매가와 변동률을 한눈에 비교합니다.</p>
+    </div>
+  </section>
+
+  <!-- 비교 표 -->
+  <section class="region">
+    <div class="container">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>구 (區)</th>
+              <th>평균 매매가 (예시)</th>
+              <th>6개월 변동률 (예시)</th>
+              <th>거래 건수 (예시)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- ※ 아래 값은 화면 예시용입니다. 실제 데이터는 이후 연동됩니다. -->
+            <tr>
+              <td class="gu-name">의창구</td>
+              <td>3억 2,400만 원</td>
+              <td class="up">▲ 2.1%</td>
+              <td>184건</td>
+            </tr>
+            <tr>
+              <td class="gu-name">성산구</td>
+              <td>4억 1,800만 원</td>
+              <td class="up">▲ 3.4%</td>
+              <td>210건</td>
+            </tr>
+            <tr>
+              <td class="gu-name">마산합포구</td>
+              <td>2억 6,300만 원</td>
+              <td class="down">▼ 1.2%</td>
+              <td>132건</td>
+            </tr>
+            <tr>
+              <td class="gu-name">마산회원구</td>
+              <td>2억 8,900만 원</td>
+              <td class="down">▼ 0.5%</td>
+              <td>145건</td>
+            </tr>
+            <tr>
+              <td class="gu-name">진해구</td>
+              <td>3억 0,100만 원</td>
+              <td class="up">▲ 1.0%</td>
+              <td>167건</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="note">
+        ※ 위 수치는 화면 구성을 보여주기 위한 예시값입니다. 실제 국토부 실거래가 데이터 연동은 이후 단계에서 진행됩니다.
+      </p>
+    </div>
+  </section>
+
+  <!-- 푸터 (공통) -->
+  <footer class="footer">
+    <div class="container">
+      <div class="foot-inner">
+        <div><strong>창원댁</strong> · 창원 아파트 매매 시장 리포트</div>
+        <div>데이터 출처: 국토교통부 실거래가 공개시스템</div>
+      </div>
+      <p class="disclaimer">
+        ※ 본 서비스는 참고용 정보이며 투자 조언이 아닙니다.
+        최근 1~2개월 데이터는 신고 지연으로 실제와 다를 수 있습니다.
+      </p>
+    </div>
+  </footer>
+
+  <script src="js/common.js"></script>
+</body>
+</html>

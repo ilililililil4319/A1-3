@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     창원댁 - AI 시장분석 페이지 (ai.html)
+     이번 단계에서는 화면(UI)만 만든다.
+     실제 국토부/OpenAI API 연동은 다음 STEP(백엔드)에서 붙인다.
+     지금은 "구 선택 → 분석 버튼 → 결과 영역" 뼈대와
+     빈 입력 실패 처리(안내 메시지)까지만 구현.
+     ============================================================ -->
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 시장분석 · 창원댁</title>
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    /* AI 분석 페이지 전용 스타일 */
+    .analyze { padding: 48px 0 72px; }
+
+    /* 입력 카드 (구 선택 + 버튼) */
+    .analyze-box {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 640px;
+      box-shadow: 0 4px 16px rgba(23,50,77,0.05);
+    }
+    .analyze-box label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    /* 구 선택 드롭다운과 버튼을 가로로 배치 */
+    .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .input-row select {
+      flex: 1;
+      min-width: 200px;
+      padding: 13px 14px;
+      font-size: 15px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--white);
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .input-row select:focus {
+      outline: none;
+      border-color: var(--teal);
+    }
+
+    /* 안내/오류 메시지 (평소 숨김) */
+    .msg {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none; /* JS로 보일 때만 표시 */
+    }
+    .msg.show { display: block; }
+    .msg.error { background: #fdecec; color: #b23b3b; border: 1px solid #f5c6c6; }
+    .msg.info  { background: #eef6f6; color: #1c6b6b; border: 1px solid #cfe6e6; }
+
+    /* 결과 표시 영역 (평소 숨김) */
+    .result {
+      margin-top: 22px;
+      max-width: 640px;
+      background: var(--sand);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 26px;
+      display: none; /* 분석 후에만 표시 */
+    }
+    .result.show { display: block; }
+    .result .result-title { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+    .result .result-body {
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* 안내 문구 */
+    .note {
+      margin-top: 26px;
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 640px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 네비게이션 (공통) -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo"><span class="dot"></span>창원댁</a>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="index.html">메인</a></li>
+        <li><a href="ai.html" class="active">AI 시장분석</a></li>
+        <li><a href="region.html">지역별 시세</a></li>
+        <li><a href="about.html">소개·문의</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 페이지 상단 제목 -->
+  <section class="page-head">
+    <div class="container">
+      <h1>AI 시장분석</h1>
+      <p>분석할 구(區)를 선택하면 최근 6개월 아파트 매매가 흐름을 AI가 한 문장으로 요약해 드립니다.</p>
+    </div>
+  </section>
+
+  <!-- 분석 입력 영역 -->
+  <section class="analyze">
+    <div class="container">
+      <div class="analyze-box">
+        <label for="guSelect">창원시 구 선택</label>
+        <div class="input-row">
+          <!-- 구 선택 드롭다운: 기본값은 빈 값(선택 안 함) -->
+          <select id="guSelect">
+            <option value="">구를 선택하세요</option>
+            <option value="의창구">의창구</option>
+            <option value="성산구">성산구</option>
+            <option value="마산합포구">마산합포구</option>
+            <option value="마산회원구">마산회원구</option>
+            <option value="진해구">진해구</option>
+          </select>
+          <!-- 분석 버튼 -->
+          <button class="btn-primary" id="analyzeBtn">분석하기</button>
+        </div>
+
+        <!-- 안내/오류 메시지가 여기에 표시됨 -->
+        <div class="msg" id="msgBox"></div>
+      </div>
+
+      <!-- 분석 결과가 여기에 표시됨 -->
+      <div class="result" id="resultBox">
+        <div class="result-title">AI 요약 결과</div>
+        <div class="result-body" id="resultBody"></div>
+      </div>
+
+      <p class="note">
+        ※ 현재는 화면 미리보기 단계입니다. 실제 국토부 실거래가 + AI 요약 연동은 다음 단계에서 추가됩니다.
+      </p>
+    </div>
+  </section>
+
+  <!-- 푸터 (공통) -->
+  <footer class="footer">
+    <div class="container">
+      <div class="foot-inner">
+        <div><strong>창원댁</strong> · 창원 아파트 매매 시장 리포트</div>
+        <div>데이터 출처: 국토교통부 실거래가 공개시스템</div>
+      </div>
+      <p class="disclaimer">
+        ※ 본 서비스는 참고용 정보이며 투자 조언이 아닙니다.
+        최근 1~2개월 데이터는 신고 지연으로 실제와 다를 수 있습니다.
+      </p>
+    </div>
+  </footer>
+
+  <script src="js/common.js"></script>
+
+  <!-- ============================================================
+       AI 분석 페이지 전용 스크립트
+       지금은 백엔드 연동 전이라, "빈 입력 처리"와
+       "결과 영역 표시" 흐름만 미리 만들어 둔다.
+       (다음 STEP에서 이 자리에 fetch('/api/...') 호출을 넣는다)
+       ============================================================ -->
+  <script>
+    const guSelect = document.getElementById('guSelect');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const msgBox = document.getElementById('msgBox');
+    const resultBox = document.getElementById('resultBox');
+    const resultBody = document.getElementById('resultBody');
+
+    // 메시지를 화면에 표시하는 helper 함수
+    function showMessage(text, type) {
+      msgBox.textContent = text;
+      msgBox.className = 'msg show ' + type; // info 또는 error
+    }
+    function clearMessage() {
+      msgBox.className = 'msg';
+      msgBox.textContent = '';
+    }
+
+    // '분석하기' 버튼을 눌렀을 때 실행
+    analyzeBtn.addEventListener('click', function () {
+      const gu = guSelect.value; // 선택한 구
+
+      // [실패 처리] 빈 입력(구 미선택) → 안내 메시지
+      if (gu === '') {
+        resultBox.classList.remove('show'); // 이전 결과 숨김
+        showMessage('구를 선택해주세요.', 'error');
+        return; // 여기서 중단
+      }
+
+      // 정상 입력 → (지금은 임시 안내) 다음 단계에서 실제 분석으로 교체
+      clearMessage();
+      showMessage(gu + ' 데이터를 불러오는 중... (다음 단계에서 실제 분석 연동 예정)', 'info');
+
+      // 결과 영역에 임시 문구 표시 (실제 AI 요약이 들어갈 자리)
+      resultBody.textContent =
+        '[미리보기] 여기에 "최근 6개월간 ' + gu + ' 아파트 평균 매매가는 O% 변동했습니다" 형태의 AI 요약이 표시됩니다.';
+      resultBox.classList.add('show');
+    });
+  </script>
+
+</body>
+</html>

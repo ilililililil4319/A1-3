@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     창원댁 - 메인 페이지 (index.html)
+     ※ 공통 디자인은 css/style.css, 공통 동작은 js/common.js 에서 관리
+     ============================================================ -->
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>창원댁 · 창원 아파트 매매 시장 리포트</title>
+
+  <!-- 공통 스타일 불러오기 -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- 이 페이지에서만 쓰는 추가 스타일 -->
+  <style>
+    /* Hero 섹션 (메인 첫 화면 전용) */
+    .hero {
+      background:
+        radial-gradient(1200px 500px at 80% -10%, rgba(28,138,138,0.35), transparent 60%),
+        linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+      color: var(--white);
+      padding: 96px 0 108px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 100% 40px;
+      pointer-events: none;
+    }
+    .hero-content { position: relative; max-width: 720px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #cfe8e8; font-size: 13px; font-weight: 600;
+      padding: 7px 14px; border-radius: 999px; margin-bottom: 22px;
+    }
+    .hero h1 { font-size: 46px; line-height: 1.2; font-weight: 800; letter-spacing: -1px; margin-bottom: 18px; }
+    .hero h1 .accent { color: #5fd0d0; }
+    .hero p.lead { font-size: 18px; color: #c7d3de; margin-bottom: 34px; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* 요약 지표 */
+    .stats { background: var(--sand); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 40px 0; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .stat-card { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 24px; text-align: center; }
+    .stat-card .num { font-size: 30px; font-weight: 800; color: var(--navy); }
+    .stat-card .label { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+    /* 서비스 소개 */
+    .intro { padding: 72px 0; }
+    .intro h2 { font-size: 28px; font-weight: 800; color: var(--navy); letter-spacing: -0.5px; margin-bottom: 14px; }
+    .intro p.desc { font-size: 16px; color: var(--muted); max-width: 640px; margin-bottom: 40px; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .feature { border: 1px solid var(--line); border-radius: 14px; padding: 26px; background: var(--white); }
+    .feature .ico { width: 42px; height: 42px; border-radius: 10px; background: rgba(28,138,138,0.12); color: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 14px; }
+    .feature h3 { font-size: 17px; color: var(--ink); margin-bottom: 8px; }
+    .feature p { font-size: 14px; color: var(--muted); }
+
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 36px; }
+    }
+    @media (max-width: 640px) {
+      .hero { padding: 64px 0 72px; }
+      .hero h1 { font-size: 30px; }
+      .hero p.lead { font-size: 16px; }
+      .hero-actions .btn-primary, .hero-actions .btn-ghost { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===================== 네비게이션 바 ===================== -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo"><span class="dot"></span>창원댁</a>
+      <ul class="nav-menu" id="navMenu">
+        <!-- 각 메뉴가 실제 페이지로 이동하도록 연결 -->
+        <li><a href="index.html" class="active">메인</a></li>
+        <li><a href="ai.html">AI 시장분석</a></li>
+        <li><a href="region.html">지역별 시세</a></li>
+        <li><a href="about.html">소개·문의</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================== Hero 섹션 ===================== -->
+  <section class="hero">
+    <div class="container hero-content">
+      <span class="hero-badge">📊 국토교통부 실거래가 기반</span>
+      <h1>
+        창원 아파트, 지금 사도 될까?<br />
+        <span class="accent">데이터로 확인</span>하세요.
+      </h1>
+      <p class="lead">
+        창원 5개 구의 실제 매매 거래 데이터를 모아, 최근 시장 흐름을
+        누구나 이해하기 쉬운 한 문장으로 정리해 드립니다.
+      </p>
+      <div class="hero-actions">
+        <!-- 버튼도 실제 페이지로 연결 -->
+        <a href="ai.html" class="btn-primary">AI 시장분석 시작하기</a>
+        <a href="region.html" class="btn-ghost">지역별 시세 보기</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 요약 지표 ===================== -->
+  <section class="stats">
+    <div class="container stats-grid">
+      <div class="stat-card"><div class="num">5개 구</div><div class="label">의창·성산·마산합포·마산회원·진해</div></div>
+      <div class="stat-card"><div class="num">최근 6개월</div><div class="label">평균 매매가 흐름 분석</div></div>
+      <div class="stat-card"><div class="num">AI 요약</div><div class="label">복잡한 데이터를 한 문장으로</div></div>
+    </div>
+  </section>
+
+  <!-- ===================== 서비스 소개 ===================== -->
+  <section class="intro">
+    <div class="container">
+      <h2>감이 아니라, 데이터로 판단하세요</h2>
+      <p class="desc">
+        창원댁은 국토교통부가 공개하는 실제 거래 데이터를 사용합니다.
+        광고나 호가가 아닌, 실제로 사고팔린 가격을 기준으로 시장을 봅니다.
+      </p>
+      <div class="feature-grid">
+        <div class="feature"><div class="ico">🏙️</div><h3>창원 5개 구 전체</h3><p>의창구·성산구·마산합포구·마산회원구·진해구의 매매 데이터를 한곳에서 비교합니다.</p></div>
+        <div class="feature"><div class="ico">📈</div><h3>6개월 흐름 분석</h3><p>최근 6개월간 평균 매매가가 어떻게 움직였는지 변동률로 확인합니다.</p></div>
+        <div class="feature"><div class="ico">🤖</div><h3>AI 요약 코멘트</h3><p>숫자 표만 보면 어렵죠. AI가 핵심 흐름을 한두 문장으로 정리해 드립니다.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 푸터 ===================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="foot-inner">
+        <div><strong>창원댁</strong> · 창원 아파트 매매 시장 리포트</div>
+        <div>데이터 출처: 국토교통부 실거래가 공개시스템</div>
+      </div>
+      <p class="disclaimer">
+        ※ 본 서비스는 참고용 정보이며 투자 조언이 아닙니다.
+        최근 1~2개월 데이터는 신고 지연으로 실제와 다를 수 있습니다.
+      </p>
+    </div>
+  </footer>
+
+  <!-- 공통 스크립트 불러오기 (모바일 메뉴) -->
+  <script src="js/common.js"></script>
+</body>
+</html>
