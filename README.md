@@ -60,6 +60,7 @@
 ```
 A1-3/
 ├── README.md
+├── .gitignore                # Git 제외 목록 (루트)
 ├── docs/                     # 기획서 등 문서
 └── web/                      # 웹 서비스 (Vercel 배포 루트)
     ├── index.html            # 메인 페이지
@@ -107,7 +108,7 @@ A1-3/
 
 **AI 시장분석 동작 화면**
 
-![AI 분석 화면](web/images/50.%20%EB%B3%B4%EB%84%88%EC%8A%A4%EA%B3%BC%EC%A0%9C-%EB%B6%84%EC%84%9D%ED%99%94%EB%A9%B4.png)
+![AI 분석 화면](web/images/39-2.%20%ED%94%84%EB%A1%A0%ED%8A%B8%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EC%84%B1%EA%B3%B52.png)
 
 **백엔드 API 응답 (JSON)**
 
@@ -242,7 +243,11 @@ vercel env add OPENAI_API_KEY
 
 모바일/태블릿/데스크톱에서 레이아웃이 깨지지 않도록 구현했으며, 실제 휴대폰에서도 정상 동작을 확인했습니다.
 
-![모바일 화면](web/images/41.%20%EC%9B%B9%EC%97%90%EC%84%9C%20%EB%AA%A8%EB%B0%94%EC%9D%BC%20%ED%99%94%EB%A9%B4.png)
+![모바일 화면](web/images/46.%20%ED%95%B8%EB%93%9C%ED%8F%B0%20%ED%99%94%EB%A9%B4%204.jpg)
+
+카카오톡으로 배포 링크를 공유했을 때의 미리보기 화면입니다.
+
+![카톡 공유](web/images/47-2.%20%EB%A7%81%ED%81%AC%20%EC%B9%B4%ED%86%A1%EC%A0%84%EC%86%A1.png)
 
 ---
 
