@@ -110,6 +110,58 @@ A1-3/
 [프론트] AI 요약 문장 + 변동률 배지를 화면에 표시
 ```
 
+**시퀀스 다이어그램** (GitHub에서 자동 렌더링됩니다)
+
+```mermaid
+sequenceDiagram
+    participant U as 사용자
+    participant F as 프론트(ai.html)
+    participant B as 백엔드(api/analyze.py)
+    participant M as 국토부 실거래가 API
+    participant O as OpenAI API
+
+    U->>F: 구(區) 선택 + 분석하기 클릭
+    F->>F: 빈 입력 검증 (#4)
+    F->>B: GET /api/analyze?gu=성산구
+    B->>B: validate_gu() 입력 검증 (#4)
+    B->>B: 캐시 확인 (TTL 10분) (#16)
+    alt 캐시 HIT
+        B-->>F: 캐시된 JSON 즉시 반환
+    else 캐시 MISS
+        B->>M: 최근 6개월 실거래가 조회
+        M-->>B: 거래 내역(XML)
+        B->>B: 월별 평균가 · 변동률 계산
+        B->>O: 계산 결과로 요약 생성 요청
+        O-->>B: 자연어 요약 텍스트
+        B->>B: 결과 캐시에 저장 (#16)
+        B-->>F: JSON 응답 (요약 + 변동률)
+    end
+    F-->>U: 요약 문장 + 변동률 배지 표시
+```
+
+### 아키텍처 개요
+
+```mermaid
+flowchart LR
+    subgraph Client["브라우저"]
+        A[index.html / ai.html / region.html / about.html]
+    end
+    subgraph Vercel["Vercel"]
+        S["정적 파일\ncss/ · js/"]
+        P["Serverless Function\napi/analyze.py"]
+    end
+    subgraph External["외부 API"]
+        MOLIT["국토교통부\n실거래가 API"]
+        OAI["OpenAI API\n(gpt-4o-mini)"]
+    end
+
+    A -- "정적 리소스 요청" --> S
+    A -- "fetch('/api/analyze?gu=...')" --> P
+    P -- "월별 거래 조회" --> MOLIT
+    P -- "요약 생성 요청" --> OAI
+    P -- "JSON 응답" --> A
+```
+
 ### AI 기능 설계
 
 - **입력:** 사용자가 창원 5개 구 중 하나를 선택
@@ -119,6 +171,52 @@ A1-3/
 ### AI 프롬프트 (요약)
 
 > 부동산 데이터를 일반인이 이해하기 쉽게 설명하는 애널리스트 역할. 데이터에 근거한 사실만 서술하고 투자 조언은 하지 않으며, "평균 매매가가 약 O% 상승/하락했습니다" 형태로 2~3문장 요약.
+
+### API 요청/응답 예시
+
+**요청**
+
+```bash
+curl "https://changwondaek.vercel.app/api/analyze?gu=성산구"
+```
+
+**성공 응답 (200)**
+
+```json
+{
+  "gu": "성산구",
+  "change": 3.4,
+  "monthly": [
+    { "month": "202502", "avg": 40073 },
+    { "month": "202503", "avg": 39207 },
+    { "month": "202504", "avg": 41764 },
+    { "month": "202505", "avg": 40297 },
+    { "month": "202506", "avg": 42906 },
+    { "month": "202507", "avg": 41449 }
+  ],
+  "summary": "최근 6개월 동안 창원시 성산구의 아파트 평균 매매가는 약 3.4% 상승했습니다. ...",
+  "cached": false
+}
+```
+
+- `cached: true`인 경우, 동일한 구를 10분 이내에 재조회하여 캐시된 결과를 즉시 반환했다는 뜻입니다. (아래 "성능·응답 지연 개선" 참고)
+
+**실패 응답 예시**
+
+```json
+// 구를 선택하지 않았거나 빈 값으로 호출한 경우 (400)
+{ "error": "구를 선택해주세요." }
+```
+
+```json
+// 목록에 없는 값이거나 비정상적으로 긴 입력을 보낸 경우 (400)
+{ "error": "지원하지 않는 지역입니다. 창원시 5개 구 중에서 선택해주세요." }
+```
+
+```json
+// 해당 기간 데이터가 부족하거나 외부 API 오류가 발생한 경우 (500)
+{ "error": "해당 기간에 분석할 거래 데이터가 충분하지 않습니다." }
+```
 
 **AI 코딩 도구(VS Code) 작업 화면**
 
@@ -327,6 +425,106 @@ Vercel Web Analytics를 적용하여 방문자 수, 페이지별 조회수를 �
 - 본 서비스는 국토교통부 공개 실거래가 데이터를 기반으로 한 **참고 정보**이며, 투자 조언이 아닙니다.
 - 실거래가는 신고 기한(계약 후 최대 30일)으로 인해 최근 1~2개월 데이터가 실제보다 적거나 다르게 보일 수 있습니다.
 - 아파트 평형·위치에 따라 월별 평균가는 변동이 있어, 개별 월보다 6개월 전체 흐름을 참고하는 것을 권장합니다.
+
+---
+
+## 16. 개선 사항 (AI 사전평가 반영)
+
+AI 사전평가(2026-09-02, 88%·15/17 PASS)에서 지적된 2건(#4, #16)을 아래와 같이 실제 코드로 보완했습니다.
+
+### 16-1. 입력 검증 강화 (#4 보완)
+
+`gu` 파라미터는 프론트에서는 `<select>` 드롭다운으로만 값이 들어오지만, `/api/analyze` 엔드포인트는 누구나 쿼리스트링으로 직접 호출할 수 있으므로 **백엔드에서도 반드시 검증**이 필요합니다. `api/analyze.py`에 `validate_gu()` 함수를 추가해 아래 3단계로 검증합니다.
+
+| 검증 단계 | 내용 | 실패 시 응답 |
+|---|---|---|
+| ① 공백/누락 확인 | `None`, 빈 문자열, 공백만 있는 값 차단 | `400` "구를 선택해주세요." |
+| ② 길이 제한 | 최장 구 이름(5자) 기준 여유를 둔 `MAX_GU_LENGTH=10`자 초과 시 차단 | `400` "입력값이 너무 깁니다. 목록에서 구를 선택해주세요." |
+| ③ 화이트리스트 검증 | 창원 5개 구 이외의 값(오타, 스크립트 주입 시도 등) 차단 | `400` "지원하지 않는 지역입니다..." |
+
+이 검증은 국토부·OpenAI API를 호출하기 **이전 단계**에서 이루어지므로, 잘못된 입력으로 인한 불필요한 외부 API 호출(과금·쿼터 소모)도 함께 방지합니다.
+
+### 16-2. 응답 지연 개선 — 캐시 전략 (#16 보완)
+
+**실제 구현:** `api/analyze.py`에 모듈 레벨 TTL 캐시(`CACHE`, 10분)를 추가했습니다. 동일한 구를 짧은 시간 내에 다시 조회하면 국토부 API 조회 + OpenAI 요약 생성을 건너뛰고 캐시된 결과를 즉시 반환합니다. 응답 JSON에 `"cached": true/false` 값을 포함해 어떤 경로로 응답했는지 투명하게 알 수 있도록 했습니다.
+
+```python
+CACHE = {}
+CACHE_TTL_SECONDS = 600  # 10분
+
+def get_cached(gu):
+    entry = CACHE.get(gu)
+    if not entry:
+        return None
+    cached_at, data = entry
+    if time.time() - cached_at > CACHE_TTL_SECONDS:
+        CACHE.pop(gu, None)
+        return None
+    return data
+```
+
+**한계 및 향후 개선 옵션 (문서화):** Vercel의 Python 서버리스 함수는 요청마다 새 컨테이너에서 실행될 수 있어(cold start), 이 모듈 레벨 캐시는 같은 컨테이너가 "warm" 상태로 재사용될 때만 유효한 **best-effort 최적화**입니다. 완전한 캐시 공유가 필요하다면 아래 대안을 고려할 수 있습니다.
+
+| 방안 | 설명 | 장단점 |
+|---|---|---|
+| **Vercel KV / Upstash Redis** | 외부 키-값 저장소에 캐시를 보관 | 모든 인스턴스가 캐시 공유 가능 / 별도 서비스 연동·비용 필요 |
+| **경량 모델 유지 + max_tokens 축소** | 이미 `gpt-4o-mini` 사용 중. `max_tokens`(현재 250)를 더 줄여 응답 시간 단축 | 요약이 짧아질 수 있어 품질과 트레이드오프 |
+| **요약 전처리(사전 계산)** | Vercel Cron으로 하루 1~2회 5개 구 데이터를 미리 계산·요약해 저장, 사용자 요청 시 즉시 반환 | 실시간성은 떨어지나 응답 속도는 가장 빠름 |
+| **HTTP 캐시 헤더** | `Cache-Control`을 응답에 추가해 CDN/브라우저 캐싱 활용 | 구현 간단 / 개인화가 필요한 응답에는 부적합(단, 본 서비스는 구 단위로만 나뉘어 적합) |
+
+현재는 첫 번째 표의 "실제 구현"(모듈 캐시)만 적용했고, 나머지는 서비스 확장 시 적용할 개선 후보로 문서화해 둡니다.
+
+### 16-3. 실제 동작 검증 (2026-09-02)
+
+로컬 개발 서버(`vercel dev`)에서 코드 반영 직후 직접 호출하여 검증했습니다.
+
+**빈 입력 시 안내 메시지 (프론트엔드)**
+
+![구선택 안내](web/images/58.%20AI%20%EC%82%AC%EC%A0%84%ED%8F%89%EA%B0%80%20%EA%B5%AC%EC%84%A0%ED%83%9D%20%EC%95%88%EB%82%B4.png)
+
+**입력 검증(#4) — 빈 값 / 목록에 없는 값 직접 호출**
+
+![입력 검증 curl](web/images/60.%20AI%20%EC%82%AC%EC%A0%84%ED%8F%89%EA%B0%80%20%EC%9E%85%EB%A0%A5%EA%B2%80%EC%A6%9D%20curl.png)
+
+```
+curl.exe "http://localhost:3000/api/analyze?gu="
+{"error": "구를 선택해주세요."}
+
+curl.exe "http://localhost:3000/api/analyze?gu=%EC%9D%B4%EC%83%81%ED%95%9C%EA%B5%AC"
+{"error": "지원하지 않는 지역입니다. 창원시 5개 구 중에서 선택해주세요."}
+```
+
+**캐시(#16) — 동일한 구를 연속 호출 시 `cached` 값 변화**
+
+![캐시 검증 curl](web/images/61.%20AI%20%EC%82%AC%EC%A0%84%ED%8F%89%EA%B0%80%20%EC%BA%90%EC%8B%9C%EA%B2%80%EC%A6%9D%20curl.png)
+
+```
+curl.exe "http://localhost:3000/api/analyze?gu=%EC%84%B1%EC%82%B0%EA%B5%AC"
+{ ..., "cached": false }   # 1차 호출 - 실제 API 조회
+
+curl.exe "http://localhost:3000/api/analyze?gu=%EC%84%B1%EC%82%B0%EA%B5%AC"
+{ ..., "cached": true }    # 2차 호출 - 캐시에서 즉시 반환
+```
+
+두 응답의 `gu`·`change`·`monthly`·`summary`가 동일하면서 `cached`만 `false → true`로 바뀐 것이 캐시 재사용의 증거입니다.
+
+---
+
+## 17. 보안 사고 대응 절차 (API 키 유출 시)
+
+과거 국토부 API 키 분실 이력이 있었던 만큼, 키 유출이 의심되거나 확인된 경우 아래 순서로 즉시 대응합니다.
+
+1. **폐기(Revoke)** — 유출된 키를 발급처에서 즉시 폐기/비활성화합니다.
+   - OpenAI: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)에서 해당 키 삭제
+   - 국토교통부(공공데이터포털): [data.go.kr](https://www.data.go.kr) 마이페이지 > 개발계정에서 활용 신청 키 폐기
+2. **재발급(Reissue)** — 새 키를 발급받아 로컬 `.env.local`과 Vercel 환경 변수(`vercel env add`)를 모두 새 값으로 교체합니다.
+3. **재배포(Redeploy)** — 환경 변수 교체 후 `vercel --prod`로 재배포해 새 키가 실제 반영되었는지 확인합니다.
+4. **커밋 이력 정리** — 만약 키가 Git 커밋에 포함된 적이 있다면:
+   - 해당 커밋이 아직 원격에 푸시되지 않았다면 `git reset` 또는 `git commit --amend`로 제거
+   - 이미 푸시되어 GitHub 이력에 남아있다면 `git filter-repo`(또는 BFG Repo-Cleaner)로 과거 이력에서 완전히 제거한 뒤 강제 푸시(`git push --force`), 그리고 **1번(폐기)이 이미 끝났는지 재확인** — 이력 정리보다 키 폐기가 항상 우선입니다.
+5. **재발생 방지** — `.gitignore`에 `.env*`가 포함되어 있는지, 커밋 전 `git status`로 민감 파일이 스테이징되지 않았는지 습관적으로 점검합니다.
+
+> 원칙: **"폐기가 먼저, 정리는 그다음"** — 커밋 이력을 지우는 것보다 키 자체를 못 쓰게 만드는 것이 훨씬 빠르고 확실한 대응입니다.
 
 ---
 

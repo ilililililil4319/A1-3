@@ -4,6 +4,7 @@
 
 import os
 import json
+import time
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -19,6 +20,73 @@ GU_CODES = {
     "마산회원구": "48127",
     "진해구": "48129",
 }
+
+# ------------------------------------------------------------------
+# [사전평가 #4 보완] 입력 검증 설정
+# gu 파라미터는 프론트에서는 <select> 드롭다운으로 제한되지만,
+# API는 누구나 쿼리스트링으로 직접 호출할 수 있으므로 백엔드에서도
+# 반드시 길이·형식·화이트리스트 검증을 해야 한다.
+# ------------------------------------------------------------------
+MAX_GU_LENGTH = 10  # "마산합포구"(5자) 기준으로 여유 있게 설정한 상한
+
+# ------------------------------------------------------------------
+# [사전평가 #16 보완] 초경량 응답 캐시
+# Vercel Python 서버리스 함수는 요청마다 새로 실행되는 것이 원칙이지만,
+# 동일 컨테이너가 "warm" 상태로 재사용되는 짧은 시간 동안에는
+# 모듈 레벨 전역 변수가 메모리에 유지된다. 이 특성을 이용해
+# 같은 구를 짧은 시간 내에 다시 조회할 때 국토부 API + OpenAI API를
+# 다시 호출하지 않고 캐시된 결과를 즉시 반환해 응답 지연을 줄인다.
+#
+# 주의: 이 캐시는 "best-effort" 최적화이며, 인스턴스가 새로 뜨거나(cold start)
+# 여러 인스턴스에 요청이 분산되면 공유되지 않는다. 완전히 신뢰 가능한
+# 캐시가 필요하다면 Vercel KV(Redis) 같은 외부 저장소를 사용해야 한다.
+# (자세한 대안은 README "성능/응답 지연 개선 방안" 참고)
+# ------------------------------------------------------------------
+CACHE = {}
+CACHE_TTL_SECONDS = 600  # 10분
+
+
+def validate_gu(raw_gu):
+    """
+    사용자 입력값(gu)을 검증한다. (#4 보완)
+    - None/빈 값인지
+    - 비정상적으로 긴 입력인지 (오용·잘못된 호출 방지)
+    - 창원 5개 구 화이트리스트에 정확히 포함되는지
+
+    반환값: (정상화된 gu 문자열, None) 또는 (None, 에러 메시지)
+    """
+    if raw_gu is None:
+        return None, "구를 선택해주세요."
+
+    gu = raw_gu.strip()
+
+    if gu == "":
+        return None, "구를 선택해주세요."
+
+    if len(gu) > MAX_GU_LENGTH:
+        return None, "입력값이 너무 깁니다. 목록에서 구를 선택해주세요."
+
+    if gu not in GU_CODES:
+        return None, "지원하지 않는 지역입니다. 창원시 5개 구 중에서 선택해주세요."
+
+    return gu, None
+
+
+def get_cached(gu):
+    """캐시에서 유효한(만료되지 않은) 결과를 가져온다."""
+    entry = CACHE.get(gu)
+    if not entry:
+        return None
+    cached_at, data = entry
+    if time.time() - cached_at > CACHE_TTL_SECONDS:
+        CACHE.pop(gu, None)  # 만료된 캐시는 정리
+        return None
+    return data
+
+
+def set_cache(gu, data):
+    """결과를 캐시에 저장한다."""
+    CACHE[gu] = (time.time(), data)
 
 
 # 최근 6개월의 YYYYMM 목록 만들기 (신고 지연 고려해 2개월 전부터 거슬러 6개)
@@ -73,6 +141,13 @@ def get_month_average(lawd_cd, deal_ymd, service_key, api_url):
 
 # 실제 분석 로직
 def analyze_gu(gu_name):
+    # [#16 보완] 캐시 확인 - 짧은 시간 내 같은 구 재조회는 즉시 반환
+    cached = get_cached(gu_name)
+    if cached:
+        result = dict(cached)
+        result["cached"] = True
+        return result
+
     service_key = os.environ.get("MOLIT_API_KEY")
     api_url = os.environ.get("MOLIT_API_URL")
     openai_key = os.environ.get("OPENAI_API_KEY")
@@ -131,22 +206,27 @@ def analyze_gu(gu_name):
     except Exception:
         return {"error": "AI 요약 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}
 
-    return {
+    result = {
         "gu": gu_name,
         "change": change,
         "monthly": monthly,
         "summary": summary,
+        "cached": False,
     }
+    set_cache(gu_name, result)  # [#16 보완] 다음 요청을 위해 캐시에 저장
+    return result
 
 
 # ============ Vercel이 호출하는 진입점(handler) ============
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         query = parse_qs(urlparse(self.path).query)
-        gu = query.get("gu", [""])[0]
+        raw_gu = query.get("gu", [None])[0]
 
-        if not gu:
-            self._send(400, {"error": "구를 선택해주세요."})
+        # [#4 보완] 빈 입력뿐 아니라 비정상적으로 긴 입력, 목록에 없는 값도 여기서 차단
+        gu, error = validate_gu(raw_gu)
+        if error:
+            self._send(400, {"error": error})
             return
 
         result = analyze_gu(gu)
