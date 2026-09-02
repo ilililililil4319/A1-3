@@ -263,11 +263,11 @@ vercel env add OPENAI_API_KEY
 
 모바일/태블릿/데스크톱에서 레이아웃이 깨지지 않도록 구현했으며, 실제 휴대폰에서도 정상 동작을 확인했습니다.
 
-![모바일 화면](web/images/46.%20%ED%95%B8%EB%93%9C%ED%8F%B0%20%ED%99%94%EB%A9%B4%204.jpg)
+<img src="web/images/46.%20%ED%95%B8%EB%93%9C%ED%8F%B0%20%ED%99%94%EB%A9%B4%204.jpg" width="300" alt="모바일 화면" />
 
 카카오톡으로 배포 링크를 공유했을 때의 미리보기 화면입니다.
 
-![카톡 공유](web/images/47-2.%20%EB%A7%81%ED%81%AC%20%EC%B9%B4%ED%86%A1%EC%A0%84%EC%86%A1.png)
+<img src="web/images/47-2.%20%EB%A7%81%ED%81%AC%20%EC%B9%B4%ED%86%A1%EC%A0%84%EC%86%A1.png" width="480" alt="카톡 공유" />
 
 ---
 
