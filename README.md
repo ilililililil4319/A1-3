@@ -480,14 +480,17 @@ def get_cached(gu):
 
 **빈 입력 시 안내 메시지 (프론트엔드)**
 
-![구선택 안내]
+[구선택 안내]
+
 <img width="1558" height="815" alt="58  네이토보완(구선택)" src="https://github.com/user-attachments/assets/572a5b0b-8d62-425e-b239-e7cb48121ebb" />
+
 
 
 
 **입력 검증(#4) — 빈 값 / 목록에 없는 값 직접 호출**
 
-![입력 검증 curl]
+[입력 검증 curl]
+
 <img width="889" height="210" alt="60  네이토보안(#4 입력 검증)" src="https://github.com/user-attachments/assets/89c8440e-afe0-44d9-af70-e9656f2ab577" />
 
 
@@ -499,9 +502,13 @@ curl.exe "http://localhost:3000/api/analyze?gu=%EC%9D%B4%EC%83%81%ED%95%9C%EA%B5
 {"error": "지원하지 않는 지역입니다. 창원시 5개 구 중에서 선택해주세요."}
 ```
 
+
+
+
 **캐시(#16) — 동일한 구를 연속 호출 시 `cached` 값 변화**
 
-![캐시 검증 curl]
+[캐시 검증 curl]
+
 <img width="1256" height="250" alt="61  네이토보안(#16 캐시 검증)" src="https://github.com/user-attachments/assets/6ad0e606-ef90-4024-94cf-e1930c253f93" />
 
 
