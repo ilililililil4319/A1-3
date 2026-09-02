@@ -494,6 +494,8 @@ def get_cached(gu):
 <img width="889" height="210" alt="60  네이토보안(#4 입력 검증)" src="https://github.com/user-attachments/assets/89c8440e-afe0-44d9-af70-e9656f2ab577" />
 
 
+
+
 ```
 curl.exe "http://localhost:3000/api/analyze?gu="
 {"error": "구를 선택해주세요."}
@@ -510,6 +512,7 @@ curl.exe "http://localhost:3000/api/analyze?gu=%EC%9D%B4%EC%83%81%ED%95%9C%EA%B5
 [캐시 검증 curl]
 
 <img width="1256" height="250" alt="61  네이토보안(#16 캐시 검증)" src="https://github.com/user-attachments/assets/6ad0e606-ef90-4024-94cf-e1930c253f93" />
+
 
 
 
