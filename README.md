@@ -500,11 +500,22 @@ def get_cached(gu):
 
 **빈 입력 시 안내 메시지 (프론트엔드)**
 
-![구선택 안내](web/images/58.%20AI%20%EC%82%AC%EC%A0%84%ED%8F%89%EA%B0%80%20%EA%B5%AC%EC%84%A0%ED%83%9D%20%EC%95%88%EB%82%B4.png)
+[구선택 안내]
+
+<img width="1558" height="815" alt="58  네이토보완(구선택)" src="https://github.com/user-attachments/assets/d46045e3-1660-44b8-bf5c-f70691d987cb" />
+
+
+
 
 **입력 검증(#4) — 빈 값 / 목록에 없는 값 직접 호출**
 
-![입력 검증 curl](web/images/60.%20AI%20%EC%82%AC%EC%A0%84%ED%8F%89%EA%B0%80%20%EC%9E%85%EB%A0%A5%EA%B2%80%EC%A6%9D%20curl.png)
+[입력 검증 curl]
+
+<img width="889" height="210" alt="60  네이토보안(#4 입력 검증)" src="https://github.com/user-attachments/assets/c5f51fc4-b3d0-43d8-8b64-89a02e4b6564" />
+
+
+
+
 
 ```
 curl.exe "http://localhost:3000/api/analyze?gu="
@@ -516,7 +527,13 @@ curl.exe "http://localhost:3000/api/analyze?gu=%EC%9D%B4%EC%83%81%ED%95%9C%EA%B5
 
 **캐시(#16) — 동일한 구를 연속 호출 시 `cached` 값 변화**
 
-![캐시 검증 curl](web/images/61.%20AI%20%EC%82%AC%EC%A0%84%ED%8F%89%EA%B0%80%20%EC%BA%90%EC%8B%9C%EA%B2%80%EC%A6%9D%20curl.png)
+[캐시 검증 curl]
+
+<img width="1256" height="250" alt="61  네이토보안(#16 캐시 검증)" src="https://github.com/user-attachments/assets/9805699e-7f51-4aa0-8331-365362b2dcf2" />
+
+
+
+
 
 ```
 curl.exe "http://localhost:3000/api/analyze?gu=%EC%84%B1%EC%82%B0%EA%B5%AC"
