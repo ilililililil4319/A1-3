@@ -285,6 +285,21 @@ vercel --prod              # 프로덕션 배포
 
 > 배포 루트는 `web` 폴더입니다. 정적 HTML과 `api/` 파이썬 함수의 라우팅은 `vercel.json`에서 정의합니다.
 
+### 배포 중 발생한 문제와 해결
+
+로컬에서는 정상 동작하던 기능이 배포 환경에서 실패하는 경우가 있었다. **Vercel 배포 로그에서 실패(Error) 원인을 확인 → 코드·설정 수정 → 재배포**를 반복하여 해결하였다.
+
+| 이슈 | 원인 | 해결 |
+|:---:|:---|:---|
+| 배포 후 '데이터 부족' 오류 | Vercel에 국토부 API 주소(MOLIT_API_URL) 미등록 | 환경변수 3개를 모두 등록 후 재배포 |
+| /ai.html이 JSON으로 표시 | 파이썬 함수가 모든 요청을 가로챔(라우팅 충돌) | vercel.json으로 정적/함수 경로를 명확히 분리 |
+| 진입점(entrypoint) 빌드 오류 | pyproject.toml과 requirements.txt 충돌 | pyproject.toml 제거, requirements.txt만 유지 |
+| 공유 링크 접속 불가 | 임시 배포 URL이 보호(Protected) 상태 | 고정 공개 URL(changwondaek.vercel.app) 사용 |
+
+아래 배포 이력에서 여러 번의 `Error`와 최종 `Ready`(Production) 상태가 문제 진단·재배포 과정을 보여준다.
+
+![Vercel 배포 로그](web/images/62.%20%EB%B2%84%EC%8E%8C%20%EB%A1%9C%EA%B7%B8%20%EC%A6%9D%EB%B9%99.png)
+
 ---
 
 ## 8. 환경 변수 설정 (중요)
@@ -480,21 +495,11 @@ def get_cached(gu):
 
 **빈 입력 시 안내 메시지 (프론트엔드)**
 
-[구선택 안내]
-
-<img width="1558" height="815" alt="58  네이토보완(구선택)" src="https://github.com/user-attachments/assets/572a5b0b-8d62-425e-b239-e7cb48121ebb" />
-
-
-
+![구선택 안내](web/images/58.%20AI%20%EC%82%AC%EC%A0%84%ED%8F%89%EA%B0%80%20%EA%B5%AC%EC%84%A0%ED%83%9D%20%EC%95%88%EB%82%B4.png)
 
 **입력 검증(#4) — 빈 값 / 목록에 없는 값 직접 호출**
 
-[입력 검증 curl]
-
-<img width="889" height="210" alt="60  네이토보안(#4 입력 검증)" src="https://github.com/user-attachments/assets/89c8440e-afe0-44d9-af70-e9656f2ab577" />
-
-
-
+![입력 검증 curl](web/images/60.%20AI%20%EC%82%AC%EC%A0%84%ED%8F%89%EA%B0%80%20%EC%9E%85%EB%A0%A5%EA%B2%80%EC%A6%9D%20curl.png)
 
 ```
 curl.exe "http://localhost:3000/api/analyze?gu="
@@ -504,17 +509,9 @@ curl.exe "http://localhost:3000/api/analyze?gu=%EC%9D%B4%EC%83%81%ED%95%9C%EA%B5
 {"error": "지원하지 않는 지역입니다. 창원시 5개 구 중에서 선택해주세요."}
 ```
 
-
-
-
 **캐시(#16) — 동일한 구를 연속 호출 시 `cached` 값 변화**
 
-[캐시 검증 curl]
-
-<img width="1256" height="250" alt="61  네이토보안(#16 캐시 검증)" src="https://github.com/user-attachments/assets/6ad0e606-ef90-4024-94cf-e1930c253f93" />
-
-
-
+![캐시 검증 curl](web/images/61.%20AI%20%EC%82%AC%EC%A0%84%ED%8F%89%EA%B0%80%20%EC%BA%90%EC%8B%9C%EA%B2%80%EC%A6%9D%20curl.png)
 
 ```
 curl.exe "http://localhost:3000/api/analyze?gu=%EC%84%B1%EC%82%B0%EA%B5%AC"
