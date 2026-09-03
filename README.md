@@ -298,7 +298,12 @@ vercel --prod              # 프로덕션 배포
 
 아래 배포 이력에서 여러 번의 `Error`와 최종 `Ready`(Production) 상태가 문제 진단·재배포 과정을 보여준다.
 
-![Vercel 배포 로그](web/images/62.%20%EB%B2%84%EC%8E%8C%20%EB%A1%9C%EA%B7%B8%20%EC%A6%9D%EB%B9%99.png)
+[Vercel 배포 로그]
+
+<img width="1919" height="977" alt="62  버쎌 로그 증빙" src="https://github.com/user-attachments/assets/96af3b19-17eb-45db-b137-32f5e3b401e0" />
+
+
+
 
 ---
 
